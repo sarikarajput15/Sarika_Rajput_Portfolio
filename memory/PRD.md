@@ -15,15 +15,23 @@ Build a 3D interactive portfolio for Sarika Rajput (Electronics & Computer Engin
 - Personalized: Landing, About, Career (Siemens + SprintM), WhatIDo (Build / Wire), Work (6 real projects from `/src/data/projects.ts`), Contact, SocialIcons, Navbar, Loading marquee, page title, meta description, favicon.
 - New: `ChessGame.tsx` — Knight's Tour 5×5 mini-game modal, opens via "PLAY CHESS" button. Bullet-proof: functional setState, useMemo for legal moves, game-over guard, disabled cells.
 - New: `GKFacts.tsx` + `gkFacts.ts` — static curated 18-fact list, daily rotation, "Another fact" button, with the thank-you quote.
-- New: `LoadingGame.tsx` — SPACE HOPPER mini-game shown during the long initial 3D character load. Press SPACE to hop the rocket across procedurally-generated purple platforms; gaps end the run. Persists `best` score in localStorage.
-- New: `ShootingStars.tsx` — canvas-based meteor + twinkling-star overlay. Subtle purple meteors on the loading screen, brighter on the dark landing section. Adaptive blend modes for light vs. dark backgrounds.
-- Chess-themed visuals: ♞ favicon, ♞ navbar logo, knight icon in CTA.
-- Build verified: `yarn build` succeeds — output in `dist/`.
-- README.md + vercel.json added for clean GitHub-to-Vercel deploy.
+- New: `LoadingGame.tsx` — SPACE HOPPER mini-game shown during initial load. Press SPACE to hop the rocket across procedurally-generated purple platforms; gaps end the run. Persists `best` score in localStorage.
+- New: `ShootingStars.tsx` — canvas-based meteor + twinkling-star overlay on loading screen and landing/hero section.
+- **MAJOR: Replaced 3D GLB character system with PNG-based animated scene** (`CharacterImageScene.tsx`):
+  - Removed `/public/models/*` (character.enc, character.glb, char_enviorment.hdr, encrypt.cjs) and `/public/draco/`
+  - Deleted `Character/Scene.tsx`, `utils/character.ts`, `utils/decrypt.ts`, `utils/animationUtils.ts`, `utils/lighting.ts`, `utils/mouseUtils.ts`, `utils/resizeUtils.ts`, `data/boneData.ts`
+  - Removed all GLTFLoader, DRACOLoader, AES Web-Crypto decryption, Blob-URL plumbing
+  - Removed `three-stdlib` dependency entirely
+  - New scene uses two of Sarika's own AI-generated PNGs: `character-front.png` (hero pose) and `character-laptop.png` (working pose). White backgrounds cleanly removed via `rembg` (AI-based segmentation).
+  - Effects: GSAP ScrollTrigger-driven crossfade between poses, mouse parallax tilt (max 6° X / 8° Y, eased), floating idle animation, glow halo, particle dots, purple rim light, blurred depth layers.
+  - Loading sequence preserved: scene preloads both images then calls `progress.loaded()`.
+- TechStack: swapped HDR file reference for drei's `preset="city"` (CDN-hosted, no local file).
+- Build verified clean: `yarn build` passes, no console errors.
 
-## Files Modified / Created (additional from second session)
-**Created:** `src/components/LoadingGame.tsx`, `src/components/styles/LoadingGame.css`, `src/components/ShootingStars.tsx`, `src/components/styles/ShootingStars.css`.
-**Modified:** `src/components/Loading.tsx` (mounted game + stars), `src/components/styles/Loading.css` (z-index/inner wrapper), `src/components/Landing.tsx` (added stars), `src/components/ChessGame.tsx` (crash fix — functional setState, useMemo, game-over guard).
+## Files Modified / Created (additional from third session)
+**Created:** `src/components/Character/CharacterImageScene.tsx`, `src/components/Character/styles/CharacterImageScene.css`, `public/images/character-front.{png,webp}`, `public/images/character-laptop.{png,webp}`.
+**Modified:** `src/components/Character/index.tsx` (now exports the image scene), `src/components/utils/GsapScroll.ts` (removed Three.js + setCharTimeline), `src/components/TechStack.tsx` (preset env).
+**Removed:** entire `Character/utils/` folder, `Scene.tsx`, `boneData.ts`, `/public/models/`, `/public/draco/`, `three-stdlib` npm package.
 
 ## Known Notes
 - 3D character GLB is shipped encrypted in the public template (`character.enc` with in-source password). Loading screen takes ~10-20s on first load because of the model + HDR environment download — this is template-default behavior.

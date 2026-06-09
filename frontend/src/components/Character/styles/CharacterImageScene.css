@@ -1,0 +1,247 @@
+/* Character image scene — fake 3D, scroll-driven, parallax */
+
+.character-container {
+  /* No positioning — let .character-model absolute-position against the
+     initial containing block (viewport), like the original 3D scene did. */
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
+.character-model {
+  position: fixed;
+  width: 100%;
+  height: 80vh;
+  max-width: 1920px;
+  max-height: 1080px;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: inherit;
+}
+
+.character-model::after {
+  content: "";
+  position: absolute;
+  width: 100vw;
+  height: 250px;
+  background-image: linear-gradient(
+    to bottom,
+    transparent,
+    var(--backgroundColor) 70%
+  );
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+}
+
+.character-model::before {
+  content: "";
+  position: absolute;
+  width: 100vw;
+  height: 700px;
+  background-color: var(--backgroundColor);
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+}
+
+/* glow / depth layers */
+.character-rim {
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  z-index: 1;
+  background-color: #f59bf8;
+  box-shadow: inset 66px 35px 85px 0px rgba(85, 0, 255, 0.65);
+  filter: blur(60px);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 0%) scale(1.2);
+  opacity: 0;
+}
+
+.character-depth {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.character-depth-1 {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(194, 164, 255, 0.35) 0%,
+    rgba(194, 164, 255, 0.05) 55%,
+    transparent 70%
+  );
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: blur(20px);
+  animation: charDepthPulse 6s ease-in-out infinite;
+}
+
+.character-depth-2 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(
+    circle,
+    rgba(245, 155, 248, 0.45) 0%,
+    transparent 70%
+  );
+  bottom: 18%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  filter: blur(40px);
+  animation: charDepthPulse 7s ease-in-out infinite 1s;
+}
+
+@keyframes charDepthPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.character-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.character-particles span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 8px rgba(194, 164, 255, 0.6);
+  opacity: 0;
+  animation-name: charFloat;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes charFloat {
+  0% { transform: translateY(20px); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-120px); opacity: 0; }
+}
+
+/* the tilt layer holds both images so mouse parallax tilts them together */
+.character-tilt-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.05s linear;
+}
+
+.character-img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  height: 100%;
+  width: auto;
+  max-height: 92%;
+  transform-origin: 50% 90%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 25px 40px rgba(85, 0, 200, 0.55))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+  will-change: transform, opacity, filter;
+}
+
+.character-img-front {
+  z-index: 6;
+}
+
+.character-img-laptop {
+  z-index: 5;
+  /* starts hidden — GSAP makes it visible on scroll */
+  opacity: 0;
+}
+
+/* subtle inner glow ring at the foot, simulating ground contact */
+.character-floor {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  width: 360px;
+  height: 28px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(194, 164, 255, 0.6) 0%,
+    transparent 70%
+  );
+  transform: translateX(-50%);
+  filter: blur(10px);
+  z-index: 3;
+  pointer-events: none;
+  animation: charFloorPulse 3.5s ease-in-out infinite;
+}
+
+@keyframes charFloorPulse {
+  0%, 100% { opacity: 0.55; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.9; transform: translateX(-50%) scale(1.1); }
+}
+
+/* Tablet */
+@media (max-width: 1400px) {
+  .character-model {
+    height: 70vh;
+  }
+  .character-depth-1 { width: 420px; height: 420px; }
+  .character-depth-2 { width: 220px; height: 220px; }
+  .character-rim { width: 380px; height: 380px; }
+}
+
+/* Mobile */
+@media (max-width: 1024px) {
+  .character-model {
+    height: 50vh;
+    bottom: 80px;
+  }
+  .character-img {
+    max-height: 100%;
+  }
+  .character-depth-1 { width: 320px; height: 320px; }
+  .character-depth-2 { width: 180px; height: 180px; filter: blur(28px); }
+  .character-rim { width: 280px; height: 280px; filter: blur(40px); }
+  .character-floor { width: 220px; height: 18px; }
+}
+
+@media (max-width: 600px) {
+  .character-model {
+    height: 44vh;
+    bottom: 60px;
+  }
+  .character-img {
+    max-height: 96%;
+  }
+}
+
+/* Light landing background — use multiply too, drop heavy purple shadow */
+@media (prefers-reduced-motion: reduce) {
+  .character-depth-1,
+  .character-depth-2,
+  .character-floor,
+  .character-particles span {
+    animation: none;
+  }
+  .character-tilt-layer {
+    transition: none;
+  }
+}
