@@ -1,10 +1,18 @@
 import { PropsWithChildren } from "react";
 import "./styles/Landing.css";
+import ShootingStars from "./ShootingStars";
 
 const Landing = ({ children }: PropsWithChildren) => {
   return (
     <>
       <div className="landing-section" id="landingDiv">
+        <ShootingStars
+          intensity={2.5}
+          color="194, 164, 255"
+          position="absolute"
+          zIndex={0}
+          blendMode="screen"
+        />
         <div className="landing-container">
           <div className="landing-intro">
             <h2>Hello! I'm</h2>

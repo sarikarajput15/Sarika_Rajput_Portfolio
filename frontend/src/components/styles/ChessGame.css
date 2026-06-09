@@ -140,6 +140,14 @@
   transform: scale(1.04);
 }
 
+.chess-cell:disabled {
+  cursor: default;
+}
+
+.chess-cell:disabled:hover {
+  transform: none;
+}
+
 .chess-visited {
   opacity: 0.55;
 }

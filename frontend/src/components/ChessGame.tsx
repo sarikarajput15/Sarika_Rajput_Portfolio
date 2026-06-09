@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { TbX, TbChessKnight, TbRotate } from "react-icons/tb";
 import "./styles/ChessGame.css";
 
@@ -7,7 +7,7 @@ import "./styles/ChessGame.css";
 const SIZE = 5;
 const TOTAL = SIZE * SIZE;
 
-const KNIGHT_MOVES = [
+const KNIGHT_MOVES: ReadonlyArray<readonly [number, number]> = [
   [-2, -1],
   [-2, 1],
   [-1, -2],
@@ -22,14 +22,43 @@ type Cell = { r: number; c: number };
 
 const cellKey = (r: number, c: number) => `${r}-${c}`;
 
+const inBounds = (r: number, c: number) =>
+  r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+
+const legalMovesFrom = (
+  knight: Cell,
+  visited: ReadonlySet<string>
+): Set<string> => {
+  const out = new Set<string>();
+  for (let i = 0; i < KNIGHT_MOVES.length; i++) {
+    const dr = KNIGHT_MOVES[i][0];
+    const dc = KNIGHT_MOVES[i][1];
+    const nr = knight.r + dr;
+    const nc = knight.c + dc;
+    if (inBounds(nr, nc) && !visited.has(cellKey(nr, nc))) {
+      out.add(cellKey(nr, nc));
+    }
+  }
+  return out;
+};
+
 const ChessGame = () => {
   const [open, setOpen] = useState(false);
   const [knight, setKnight] = useState<Cell | null>(null);
-  const [visited, setVisited] = useState<Set<string>>(new Set());
+  const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const [order, setOrder] = useState<Cell[]>([]);
   const [message, setMessage] = useState(
     "Pick any square to place the knight."
   );
+
+  const legalSet = useMemo<Set<string>>(() => {
+    if (!knight) return new Set();
+    return legalMovesFrom(knight, visited);
+  }, [knight, visited]);
+
+  const won = visited.size === TOTAL;
+  const stuck = Boolean(knight) && !won && legalSet.size === 0;
+  const gameOver = won || stuck;
 
   const reset = useCallback(() => {
     setKnight(null);
@@ -41,78 +70,127 @@ const ChessGame = () => {
   useEffect(() => {
     const onOpen = () => {
       setOpen(true);
-      reset();
+      setKnight(null);
+      setVisited(new Set());
+      setOrder([]);
+      setMessage("Pick any square to place the knight.");
     };
     window.addEventListener("open-chess-game", onOpen);
     return () => window.removeEventListener("open-chess-game", onOpen);
-  }, [reset]);
+  }, []);
 
   useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    if (open) window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const isLegalMove = (r: number, c: number) => {
-    if (!knight) return true;
-    if (visited.has(cellKey(r, c))) return false;
-    const dr = Math.abs(knight.r - r);
-    const dc = Math.abs(knight.c - c);
-    return (dr === 2 && dc === 1) || (dr === 1 && dc === 2);
-  };
+  const handleClick = useCallback(
+    (r: number, c: number) => {
+      // Hard guards
+      if (!inBounds(r, c)) return;
+      if (gameOver) return;
 
-  const handleClick = (r: number, c: number) => {
-    if (!knight) {
-      setKnight({ r, c });
-      const v = new Set<string>();
-      v.add(cellKey(r, c));
-      setVisited(v);
-      setOrder([{ r, c }]);
-      setMessage("Now move like a knight — L-shape. Visit all 25 squares.");
-      return;
-    }
-    if (!isLegalMove(r, c)) {
-      setMessage("Not a legal knight move. Try an L-shape.");
-      return;
-    }
-    const v = new Set(visited);
-    v.add(cellKey(r, c));
-    const newOrder = [...order, { r, c }];
-    setVisited(v);
-    setKnight({ r, c });
-    setOrder(newOrder);
-    if (v.size === TOTAL) {
-      setMessage("Checkmate-level focus! You completed the Knight's Tour. ♞");
-    } else {
-      // Check if there are any legal moves left
-      let anyLegal = false;
-      for (const [dr, dc] of KNIGHT_MOVES) {
-        const nr = r + dr;
-        const nc = c + dc;
-        if (
-          nr >= 0 &&
-          nr < SIZE &&
-          nc >= 0 &&
-          nc < SIZE &&
-          !v.has(cellKey(nr, nc))
-        ) {
-          anyLegal = true;
-          break;
+      setKnight((prevKnight) => {
+        if (!prevKnight) {
+          // Place knight (first move)
+          const start = { r, c };
+          const v = new Set<string>();
+          v.add(cellKey(r, c));
+          setVisited(v);
+          setOrder([start]);
+          setMessage("Now move like a knight — L-shape. Visit all 25 squares.");
+          return start;
         }
-      }
-      if (!anyLegal) {
-        setMessage(
-          `No legal moves left. You visited ${v.size}/${TOTAL}. Reset to try again.`
-        );
-      } else {
-        setMessage(`${v.size} / ${TOTAL} squares visited.`);
-      }
-    }
-  };
+
+        const targetKey = cellKey(r, c);
+
+        // Pull latest visited via functional updater
+        let didMove = false;
+        setVisited((prevVisited) => {
+          if (prevVisited.has(targetKey)) {
+            setMessage("Already visited. Pick an unvisited L-move.");
+            return prevVisited;
+          }
+          const dr = Math.abs(prevKnight.r - r);
+          const dc = Math.abs(prevKnight.c - c);
+          const isL = (dr === 2 && dc === 1) || (dr === 1 && dc === 2);
+          if (!isL) {
+            setMessage("Not a legal knight move. Try an L-shape.");
+            return prevVisited;
+          }
+          const v = new Set(prevVisited);
+          v.add(targetKey);
+          didMove = true;
+
+          // Compute next state messages here using the post-move set
+          if (v.size === TOTAL) {
+            setMessage("Checkmate-level focus! You completed the tour. ♞");
+          } else {
+            const nextLegal = legalMovesFrom({ r, c }, v);
+            if (nextLegal.size === 0) {
+              setMessage(
+                `No legal moves left. You visited ${v.size}/${TOTAL}. Reset to try again.`
+              );
+            } else {
+              setMessage(`${v.size} / ${TOTAL} squares visited.`);
+            }
+          }
+          return v;
+        });
+
+        if (didMove) {
+          setOrder((prev) => [...prev, { r, c }]);
+          return { r, c };
+        }
+        return prevKnight;
+      });
+    },
+    [gameOver]
+  );
 
   if (!open) return null;
+
+  // Build the cells once per render
+  const cells: JSX.Element[] = [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const key = cellKey(r, c);
+      const isDark = (r + c) % 2 === 1;
+      const isKnight = knight !== null && knight.r === r && knight.c === c;
+      const isVisited = visited.has(key);
+      const isLegalTarget = legalSet.has(key);
+      const moveNum = order.findIndex((o) => o.r === r && o.c === c);
+      const classes = ["chess-cell", isDark ? "chess-dark" : "chess-light"];
+      if (isKnight) classes.push("chess-knight-cell");
+      else if (isVisited) classes.push("chess-visited");
+      if (isLegalTarget && !isVisited && !gameOver) classes.push("chess-legal");
+      const disabled = gameOver || (isVisited && !isKnight);
+      cells.push(
+        <button
+          key={key}
+          className={classes.join(" ")}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick(r, c);
+          }}
+          disabled={disabled}
+          data-cursor="disable"
+          data-testid={`chess-cell-${r}-${c}`}
+          type="button"
+        >
+          {isKnight ? (
+            <TbChessKnight className="chess-knight-icon" />
+          ) : isVisited && moveNum >= 0 ? (
+            <span className="chess-step">{moveNum + 1}</span>
+          ) : null}
+        </button>
+      );
+    }
+  }
 
   return (
     <div
@@ -120,7 +198,12 @@ const ChessGame = () => {
       onClick={() => setOpen(false)}
       data-testid="chess-overlay"
     >
-      <div className="chess-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="chess-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="chess-modal-head">
           <div className="chess-title">
             <TbChessKnight />
@@ -147,41 +230,9 @@ const ChessGame = () => {
             gridTemplateRows: `repeat(${SIZE}, 1fr)`,
           }}
           data-testid="chess-board"
+          onClick={(e) => e.stopPropagation()}
         >
-          {Array.from({ length: SIZE }).map((_, r) =>
-            Array.from({ length: SIZE }).map((_, c) => {
-              const key = cellKey(r, c);
-              const isDark = (r + c) % 2 === 1;
-              const isKnight = knight?.r === r && knight?.c === c;
-              const isVisited = visited.has(key);
-              const legal = isLegalMove(r, c);
-              const moveNum = order.findIndex((o) => o.r === r && o.c === c);
-              return (
-                <button
-                  key={key}
-                  className={[
-                    "chess-cell",
-                    isDark ? "chess-dark" : "chess-light",
-                    isKnight ? "chess-knight-cell" : "",
-                    isVisited && !isKnight ? "chess-visited" : "",
-                    legal && knight && !isVisited ? "chess-legal" : "",
-                  ]
-                    .join(" ")
-                    .trim()}
-                  onClick={() => handleClick(r, c)}
-                  data-cursor="disable"
-                  data-testid={`chess-cell-${r}-${c}`}
-                  type="button"
-                >
-                  {isKnight ? (
-                    <TbChessKnight className="chess-knight-icon" />
-                  ) : isVisited ? (
-                    <span className="chess-step">{moveNum + 1}</span>
-                  ) : null}
-                </button>
-              );
-            })
-          )}
+          {cells}
         </div>
         <div className="chess-actions">
           <button

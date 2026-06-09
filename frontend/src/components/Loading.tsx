@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import "./styles/Loading.css";
 import { useLoading } from "../context/LoadingProvider";
+import LoadingGame from "./LoadingGame";
+import ShootingStars from "./ShootingStars";
 
 import Marquee from "react-fast-marquee";
 
@@ -60,6 +62,14 @@ const Loading = ({ percent }: { percent: number }) => {
         </div>
       </div>
       <div className="loading-screen">
+        <ShootingStars
+          intensity={4}
+          color="120, 80, 200"
+          position="absolute"
+          zIndex={0}
+          blendMode="multiply"
+        />
+        <div className="loading-screen-inner">
         <div className="loading-marquee">
           <Marquee>
             <span> Electronics Engineer</span> <span>Full-Stack Developer</span>
@@ -84,6 +94,8 @@ const Loading = ({ percent }: { percent: number }) => {
               <span>Welcome</span>
             </div>
           </div>
+        </div>
+        <LoadingGame />
         </div>
       </div>
     </>

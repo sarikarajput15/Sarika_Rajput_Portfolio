@@ -9,19 +9,21 @@ Build a 3D interactive portfolio for Sarika Rajput (Electronics & Computer Engin
 - GSAP (standard, free) + ScrollSmoother + ScrollTrigger
 - react-icons, react-fast-marquee, @vercel/analytics
 
-## What's Been Implemented (2026-01-08)
+## What's Been Implemented (2026-01-08 → 2026-01-09)
 - Cloned MoncyDev template into `/app/frontend`, Vite running on port 3000 via supervisor.
 - Replaced trial GSAP (`gsap-trial`) with standard free `gsap@latest` (ScrollSmoother + SplitText).
 - Personalized: Landing, About, Career (Siemens + SprintM), WhatIDo (Build / Wire), Work (6 real projects from `/src/data/projects.ts`), Contact, SocialIcons, Navbar, Loading marquee, page title, meta description, favicon.
-- New: `ChessGame.tsx` — Knight's Tour 5×5 mini-game modal, opens via "PLAY CHESS" button.
+- New: `ChessGame.tsx` — Knight's Tour 5×5 mini-game modal, opens via "PLAY CHESS" button. Bullet-proof: functional setState, useMemo for legal moves, game-over guard, disabled cells.
 - New: `GKFacts.tsx` + `gkFacts.ts` — static curated 18-fact list, daily rotation, "Another fact" button, with the thank-you quote.
+- New: `LoadingGame.tsx` — SPACE HOPPER mini-game shown during the long initial 3D character load. Press SPACE to hop the rocket across procedurally-generated purple platforms; gaps end the run. Persists `best` score in localStorage.
+- New: `ShootingStars.tsx` — canvas-based meteor + twinkling-star overlay. Subtle purple meteors on the loading screen, brighter on the dark landing section. Adaptive blend modes for light vs. dark backgrounds.
 - Chess-themed visuals: ♞ favicon, ♞ navbar logo, knight icon in CTA.
 - Build verified: `yarn build` succeeds — output in `dist/`.
 - README.md + vercel.json added for clean GitHub-to-Vercel deploy.
 
-## Files Modified / Created
-**Modified:** `index.html`, `src/App.tsx`, `src/components/Landing.tsx`, `About.tsx`, `Career.tsx`, `WhatIDo.tsx`, `Work.tsx`, `Contact.tsx`, `SocialIcons.tsx`, `Navbar.tsx`, `Loading.tsx`, `MainContainer.tsx`, `Character/utils/...` (gsap-trial → gsap), `vite.config.ts`, `package.json`.
-**Created:** `src/components/ChessGame.tsx`, `src/components/GKFacts.tsx`, `src/components/styles/ChessGame.css`, `src/components/styles/GKFacts.css`, `src/data/projects.ts`, `src/data/gkFacts.ts`, `public/favicon.svg`, `README.md`, `vercel.json`.
+## Files Modified / Created (additional from second session)
+**Created:** `src/components/LoadingGame.tsx`, `src/components/styles/LoadingGame.css`, `src/components/ShootingStars.tsx`, `src/components/styles/ShootingStars.css`.
+**Modified:** `src/components/Loading.tsx` (mounted game + stars), `src/components/styles/Loading.css` (z-index/inner wrapper), `src/components/Landing.tsx` (added stars), `src/components/ChessGame.tsx` (crash fix — functional setState, useMemo, game-over guard).
 
 ## Known Notes
 - 3D character GLB is shipped encrypted in the public template (`character.enc` with in-source password). Loading screen takes ~10-20s on first load because of the model + HDR environment download — this is template-default behavior.

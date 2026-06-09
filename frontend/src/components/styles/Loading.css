@@ -8,6 +8,16 @@
   display: flex;
   place-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.loading-screen-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 .loading-button {
   padding: 20px 50px;
