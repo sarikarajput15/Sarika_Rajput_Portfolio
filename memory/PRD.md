@@ -18,7 +18,7 @@ Build a 3D interactive portfolio for Sarika Rajput (Electronics & Computer Engin
 - New: `LoadingGame.tsx` — SPACE HOPPER mini-game shown during initial load. Press SPACE to hop the rocket across procedurally-generated purple platforms; gaps end the run. Persists `best` score in localStorage.
 - New: `ShootingStars.tsx` — canvas-based meteor + twinkling-star overlay on loading screen and landing/hero section.
 - **MAJOR: Replaced 3D GLB character system with PNG-based animated scene** (`CharacterImageScene.tsx`):
-  - Removed `/public/models/*` (character.enc, character.glb, char_enviorment.hdr, encrypt.cjs) and `/public/draco/`
+  - Removed `/public/models/*` (character.enc, char_enviorment.hdr, encrypt.cjs) and `/public/draco/`
   - Deleted `Character/Scene.tsx`, `utils/character.ts`, `utils/decrypt.ts`, `utils/animationUtils.ts`, `utils/lighting.ts`, `utils/mouseUtils.ts`, `utils/resizeUtils.ts`, `data/boneData.ts`
   - Removed all GLTFLoader, DRACOLoader, AES Web-Crypto decryption, Blob-URL plumbing
   - Removed `three-stdlib` dependency entirely
